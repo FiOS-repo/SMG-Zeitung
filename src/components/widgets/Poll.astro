@@ -1,0 +1,42 @@
+---
+import Button from "../Button.astro";
+const { question, answers }: { question: string; answers: string | string[] } = Astro.props;
+let parsedAnswers: string[] = [];
+if (typeof answers === "string") {
+    try {
+        const parsed = JSON.parse(answers);
+        if (Array.isArray(parsed) && parsed.every((item) => typeof item === "string")) {
+            parsedAnswers = parsed;
+        } else {
+            console.error("Parsed answers is not a valid array of strings.");
+        }
+    } catch (e) {
+        console.error("Invalid JSON in answers prop:", e);
+    }
+} else if (Array.isArray(answers)) {
+
+    parsedAnswers = answers.filter((item) => typeof item === "string")
+} else {
+    console.error("Invalid type for answers prop. Expected string or string[].");
+}
+---
+<!-- TODO: Pick Random Poll-->
+<div class="bg-blue-200 rounded-3xl bg-clip-padding backdrop-filter backdrop-blur-3xl bg-opacity-20 ring-1 ring-blue-200 p-6 shadow-lg mb-10 w-72">
+    <div class="text-2xl text-blue-900 font-bold">Umfrage</div>
+    <div class="mt-4">
+        <p class="text-lg text-gray-800">{question}</p>
+        <div class="mt-4">
+            {parsedAnswers.length > 0 ? (
+                parsedAnswers.map((answer: string, index: number) => (
+                        <label key={index} class="flex items-center mb-2">
+                            <input type="radio" name="os" class="mr-2" />
+                            <span class="text-gray-700">{answer}</span>
+                        </label>
+                ))
+            ) : (
+                    <p class="text-gray-500">Keine Antworten verfügbar.</p>
+            )}
+        </div>
+    </div>
+    <Button text="Abstimmen" />
+</div>

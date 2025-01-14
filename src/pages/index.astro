@@ -1,0 +1,84 @@
+---
+import Main from "../layouts/Main.astro";
+import Split from "../layouts/Split.astro";
+import Card from "../components/Card.astro";
+import Pagination from "../components/Pagination.astro";
+
+// Import widgets
+import Weather from "../components/widgets/Weather.astro";
+import Poll from "../components/widgets/Poll.astro";
+import NewArticles from "../components/widgets/NewArticles.astro";
+import Hashtags from "../components/widgets/Hashtags.astro";
+
+// Define interfaces
+interface Post {
+	title: { rendered: string };
+	excerpt: { rendered: string };
+	link: string;
+	_embedded: {
+	'wp:featuredmedia'?: [{ source_url: string }];
+	'wp:term'?: Array<Array<{ name: string }>>;
+};
+}
+
+interface WeatherData {
+	description?: string;
+	temperature?: number;
+	iconurl?: string;
+	}
+
+// Fetch posts
+let posts: Post[] = [];
+try {
+	const res = await fetch("https://wp.fiosproject.de/wp-json/wp/v2/posts?_embed");
+	if (!res.ok) throw new Error(`Failed to fetch posts. Status: ${res.status}`);
+	posts = await res.json();
+	} catch (error) {
+	console.error("Error fetching posts:", error);
+	}
+
+// Fetch weather data
+let weatherData: WeatherData = {};
+try {
+	const res = await fetch("http://localhost:3000/weather");
+	if (!res.ok) throw new Error(`Failed to fetch weather data. Status: ${res.status}`);
+	weatherData = await res.json();
+	} catch (error) {
+	console.error("Error fetching weather data:", error);
+	}
+
+// Constants
+const pageTitle = "PINGUIN | Startseite";
+const question = "Welches Betriebssystem verwenden Sie am häufigsten?";
+const answers = JSON.stringify(["Windows", "macOS", "Linux", "Andere"]);
+
+// Map post links for rendering
+const formattedPosts = posts.map(post => ({
+	...post,
+	formattedLink: post.link.replace("https://wp.fiosproject.de/archive/", "/article/"),
+	hashtags: post._embedded?.['wp:term']?.flat().map(term => term.name).join(', ') || '',
+	}));
+---
+<Main pageTitle={pageTitle}>
+	<Split>
+		<div slot="Articles">
+			{formattedPosts.map((post) => (
+				<Card
+					title={post.title.rendered}
+					description={post.excerpt.rendered}
+					href={post.formattedLink}
+					fimage={post._embedded?.['wp:featuredmedia']?.[0]?.source_url || ''}
+					hashtags={post.hashtags}
+				/>
+			))}
+			<Card title="Hallo Welt" description="Das ist ein Test" hashtags="example, sample, test" />
+			<Pagination active="1" next="2" nextnext="3" /> {/* TODO: Make Pagination work */}
+		</div>
+		<div slot="Widgets">
+			<Weather degrees={weatherData.temperature} iconurl={weatherData.iconurl} />
+			<Poll question={question} answers={answers} />
+			<NewArticles articles={["Artikel 1", "Artikel 2", "Artikel 3"]} />
+			<Hashtags hashtags="Video, Essen, dsa" />
+		</div>
+	</Split>
+</Main>

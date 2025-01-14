@@ -1,0 +1,40 @@
+---
+
+const pageTitle = '';
+import NavBar from "../components/NavBar.astro";
+---
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width" />
+    <meta name="generator" content={Astro.generator} />
+    <title>{pageTitle}</title>
+    <style>
+      @font-face {
+        font-family: "Ballo";
+        src: url(../assets/BalooDa2-VariableFont_wght.ttf);
+      }
+
+      * {
+        font-family: "Ballo";
+      }
+
+      .thick {
+        font-weight: bolder;
+      }
+
+      .hidden {
+        display: none;
+      }
+      body {
+        background-color: #f7fbff;
+      }
+    </style>
+  </head>
+  <body>
+  <div class="absolute inset-0 -z-10 h-full w-full bg-white bg-[linear-gradient(to_right,#8080800a_1px,transparent_1px),linear-gradient(to_bottom,#8080800a_1px,transparent_1px)] bg-[size:14px_24px]"><div class="absolute left-0 right-0 top-0 -z-10 m-auto h-[410px] w-full rounded-full bg-blue-400 opacity-20 blur-[100px]"></div></div>
+    <NavBar />
+    <slot />
+  </body>
+</html>

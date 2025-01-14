@@ -1,0 +1,79 @@
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  let showCategories = false;
+
+  const toggleCategories = () => {
+    showCategories = !showCategories;
+    const navbar = document.querySelector('.navbar');
+    if (navbar) {
+      if (showCategories) {
+        navbar.classList.add('show-categories');
+      } else {
+        navbar.classList.remove('show-categories');
+      }
+    }
+  };
+
+  const fetchCategories = async () => {
+    try {
+      const res = await fetch('http://wp.fiosproject.de/wp-json/wp/v2/categories');
+      if (!res.ok) throw new Error(`Failed to fetch categories. Status: ${res.status}`);
+      const data = await res.json();
+      const categoriesContainer = document.querySelector('.categories-container');
+      if (categoriesContainer) {
+        categoriesContainer.innerHTML = data.map((category) => `
+          <a href="/category/${category.id}">
+            <button class="bg-blue-200 text-blue-800 font-bold py-2 px-4 mr-5 rounded-lg hover:bg-blue-300 duration-700">${category.name}</button>
+          </a>
+        `).join('');
+
+        // Add the back button after setting the categories
+        const backButton = document.createElement('button');
+        backButton.className = 'bg-blue-200 text-blue-800 font-bold py-2 px-4 mr-5 rounded-lg hover:bg-blue-300 duration-700 toggle-categories flex items-center';
+        backButton.innerHTML = '<img src="/src/assets/back-arrow-icon.svg" alt="Back icon" class="w-4 h-4 mr-2 fill-blue-800" /> Zurück';
+        categoriesContainer.appendChild(backButton);
+
+        // Add event listener to the back button
+        backButton.addEventListener('click', toggleCategories);
+      }
+    } catch (error) {
+      console.error('Error fetching categories:', error);
+    }
+  };
+
+  fetchCategories();
+
+  document.querySelectorAll('.toggle-categories').forEach(button => {
+    button.addEventListener('click', toggleCategories);
+  });
+});
+</script>
+<div class="navbar py-3 px-3 fixed top-0 left-1/2 transform -translate-x-1/2 z-40 mt-5 rounded-lg bg-blue-100 shadow-2xl flex items-center justify-center transition-all duration-500">
+  <div class="default-nav">
+    <a href="/"><button class="bg-blue-200 text-blue-800 font-bold py-2 px-4 mr-5 rounded-lg hover:bg-blue-300 duration-700">Startseite</button></a>
+    <a href="/"><button class="bg-blue-200 text-blue-800 font-bold py-2 px-4 mr-5 rounded-lg hover:bg-blue-300 duration-700">Über uns</button></a>
+    <button class="bg-blue-200 text-blue-800 font-bold py-2 px-4 rounded-lg hover:bg-blue-300 duration-700 toggle-categories">Kategorien</button>
+  </div>
+  <div class="categories-container hidden">
+    <button class="bg-blue-200 text-blue-800 font-bold py-2 px-4 mr-5 rounded-lg hover:bg-blue-300 duration-700 toggle-categories">Back</button>
+  </div>
+</div>
+
+<style>
+.navbar {
+  transition: all 0.5s ease-in-out;
+}
+.navbar.show-categories .default-nav {
+  display: none;
+}
+.navbar.show-categories .categories-container {
+  display: flex;
+}
+.hidden {
+  display: none;
+}
+
+* {
+  transition: 1s;
+}
+</style>

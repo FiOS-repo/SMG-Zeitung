@@ -1,0 +1,26 @@
+---
+const { hashtags }: { hashtags: string[] } = Astro.props; // Ensure `hashtags` is passed as a string array.
+import Hashtag from "../Hashtag.astro";
+---
+
+<div class="bg-blue-200 rounded-3xl bg-clip-padding backdrop-filter backdrop-blur-3xl bg-opacity-20 ring-1 ring-blue-200 p-6 shadow-lg mb-10 w-72">
+    <!-- Title -->
+    <div class="text-2xl text-blue-900 font-bold">Trendige Themen</div>
+
+    <!-- Description -->
+    <div class="mt-4">
+        <p class="text-lg text-gray-800">Die trendigsten Themen auf der SMGZ</p>
+
+        <!-- Tags -->
+        <div class="mt-4 flex flex-wrap gap-4">
+            <!-- Dynamic Tags from `hashtags` -->
+            {Array.isArray(hashtags) && hashtags.length > 0 ? (
+                hashtags.map((hashtag: string, index: number) => (
+                        <Hashtag hashtag={hashtag} key={index} />
+                ))
+            ) : (
+                    <p class="text-gray-500">Keine Artikel verfügbar.</p>
+            )}
+        </div>
+    </div>
+</div>

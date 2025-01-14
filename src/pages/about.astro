@@ -1,0 +1,23 @@
+---
+import Main from "../layouts/Main.astro"
+import Split from "../layouts/Split.astro";
+import Weather from "../components/widgets/Weather.astro";
+import Poll from "../components/widgets/Poll.astro";
+import NewArticles from "../components/widgets/NewArticles.astro";
+import Hashtags from "../components/widgets/Hashtags.astro";
+
+---
+
+<Main>
+    <Split>
+        <div slot="Articles">
+
+        </div>
+        <div slot="Widgets">
+            <Weather degrees={weatherData.temperature} iconurl={weatherData.iconurl} />
+            <Poll question={question} answers={answers} />
+            <NewArticles articles={["Artikel 1", "Artikel 2", "Artikel 3"]} />
+            <Hashtags hashtags="Video, Essen, dsa" />
+        </div>
+    </Split>
+</Main>

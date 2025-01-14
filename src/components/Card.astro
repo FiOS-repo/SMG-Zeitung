@@ -1,0 +1,22 @@
+---
+const { title, description, href, fimage, hashtags } = Astro.props;
+const hashtagsArray = typeof hashtags === 'string' ? hashtags.split(',') : Array.isArray(hashtags) ? hashtags : [];
+import Button from "./Button.astro";
+---
+
+<div class="bg-blue-200 rounded-3xl bg-clip-padding backdrop-filter backdrop-blur-3xl bg-opacity-20 ring-1 ring-blue-200 motion-translate-x-in-[0%] motion-translate-y-in-[50%] motion-blur-in-[50px] p-6 shadow-lg flex items-center justify-between w-full mb-10">
+    <!--bg-blue-100 rounded-3xl p-6 shadow-lg flex items-center justify-between w-full mb-10-->
+    <div>
+        <div class="flex items-center">
+            <h1 class="text-2xl font-bold text-gray-800">{title}</h1>
+            <div class="ml-4 flex flex-wrap">
+                {hashtagsArray.map((hashtag) => (
+                        <span class="inline-block bg-blue-200 text-blue-800 text-sm font-semibold mr-2 px-2.5 py-0.5 rounded">{`#${hashtag.trim()}`}</span>
+                ))}
+            </div>
+        </div>
+        <p class="text-lg mt-2 text-gray-500" set:html={description}></p>
+        <Button text="Weiterlesen" href={href} />
+    </div>
+    <img src={fimage} alt={title} class="h-32 rounded-lg ml-2" />
+</div>
