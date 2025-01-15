@@ -1,7 +1,9 @@
 ---
 const { hashtags }: { hashtags: string[] } = Astro.props; // Ensure `hashtags` is passed as a string array.
 import Hashtag from "../Hashtag.astro";
+
 ---
+<link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
 
 <div class="bg-blue-200 rounded-3xl bg-clip-padding backdrop-filter backdrop-blur-3xl bg-opacity-20 ring-1 ring-blue-200 p-6 shadow-lg mb-10 w-72">
     <!-- Title -->
@@ -24,3 +26,8 @@ import Hashtag from "../Hashtag.astro";
         </div>
     </div>
 </div>
+<script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+<script>
+import AOS from 'aos';
+AOS.init();
+</script>
