@@ -1,0 +1,85 @@
+---
+---
+
+<style>
+
+  body {
+    user-select: none;
+    cursor: none; /* Hide the default cursor */
+  }
+
+  .custom-cursor {
+    transition: transform 0.1s ease-out, width 0.2s ease-out, height 0.2s ease-out;
+  }
+
+  .custom-cursor.click, .custom-cursor.drag {
+    width: 40px; /* Increase size on click or drag */
+    height: 40px; /* Increase size on click or drag */
+  }
+
+  .custom-cursor.dragging {
+    width: 60px;
+    height: 40px;
+  }
+
+  button:hover ~ .custom-cursor {
+    opacity: 0;
+  }
+</style>
+<script>
+  document.addEventListener("DOMContentLoaded", () => {
+    const cursor = document.querySelector(".custom-cursor");
+    let isDragging = false;
+    let mouseX = 0, mouseY = 0;
+    let cursorX = 0, cursorY = 0;
+
+    document.addEventListener("mousemove", (e) => {
+      mouseX = e.clientX;
+      mouseY = e.clientY;
+    });
+
+    function animateCursor() {
+      cursorX += (mouseX - cursorX) * 0.2;
+      cursorY += (mouseY - cursorY) * 0.2;
+      cursor.style.transform = `translate(${cursorX}px, ${cursorY}px)`;
+      requestAnimationFrame(animateCursor);
+    }
+    requestAnimationFrame(animateCursor);
+
+    document.addEventListener("mousedown", () => {
+      isDragging = true;
+      cursor.classList.add("dragging");
+    });
+
+    document.addEventListener("mouseup", () => {
+      isDragging = false;
+      cursor.classList.remove("dragging");
+    });
+
+    document.addEventListener("click", () => {
+      cursor.classList.add("click");
+      setTimeout(() => {
+        cursor.classList.remove("click");
+      }, 200); // Duration of the animation
+    });
+
+    document.addEventListener("dragstart", () => {
+      cursor.classList.add("drag");
+    });
+
+    document.addEventListener("dragend", () => {
+      cursor.classList.remove("drag");
+    });
+
+    document.querySelectorAll("button").forEach(button => {
+      button.addEventListener("mouseenter", () => {
+        //cursor.style.transition = "1s";
+        cursor.style.opacity = 0;
+      });
+      button.addEventListener("mouseleave", () => {
+        cursor.style.opacity = 1;
+      });
+    });
+  });
+</script>
+<div class="custom-cursor ring-1 ring-blue-300 w-6 h-6 rounded-full absolute pointer-events-none transition-transform ease-out duration-100 transform -translate-x-1/2 -translate-y-1/2 z-50 top-0 left-0 bg-white bg-opacity-30 backdrop-filter backdrop-blur-lg"></div>
