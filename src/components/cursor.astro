@@ -10,6 +10,7 @@
 
   .custom-cursor {
     transition: transform 0.1s ease-out, width 0.2s ease-out, height 0.2s ease-out;
+    z-index: 999;
   }
 
   .custom-cursor.click, .custom-cursor.drag {
@@ -22,7 +23,7 @@
     height: 40px;
   }
 
-  button:hover ~ .custom-cursor {
+  button:hover ~ .custom-cursor, p:hover ~ .custom-cursor, span:hover ~ .custom-cursor {
     opacity: 0;
   }
 </style>
@@ -41,7 +42,7 @@
     function animateCursor() {
       cursorX += (mouseX - cursorX) * 0.2;
       cursorY += (mouseY - cursorY) * 0.2;
-      cursor.style.transform = `translate(${cursorX}px, ${cursorY}px)`;
+      cursor.style.transform = `translate(${cursorX - cursor.offsetWidth / 2}px, ${cursorY - cursor.offsetHeight / 2}px)`;
       requestAnimationFrame(animateCursor);
     }
     requestAnimationFrame(animateCursor);
@@ -71,12 +72,11 @@
       cursor.classList.remove("drag");
     });
 
-    document.querySelectorAll("button").forEach(button => {
-      button.addEventListener("mouseenter", () => {
-        //cursor.style.transition = "1s";
+    document.querySelectorAll("button").forEach(element => {
+      element.addEventListener("mouseenter", () => {
         cursor.style.opacity = 0;
       });
-      button.addEventListener("mouseleave", () => {
+      element.addEventListener("mouseleave", () => {
         cursor.style.opacity = 1;
       });
     });

@@ -1,0 +1,18 @@
+---
+import Button from "./Button.astro"
+---
+<style>
+    .banner {
+        position: fixed;
+        bottom: 0;
+        z-index: 104;
+    }
+</style>
+
+<div class="banner h-64 m-3  w-96 bg-blue-200 rounded-3xl p-4 backdrop-filter backdrop-blur-3xl bg-opacity-20 ring-1 ring-blue-200 motion-translate-x-in-[0%] motion-translate-y-in-[50%] motion-opacity-in-[70%] motion-blur-in-[20px]">
+    <h1 class="text-blue-800 font-bold">Diese seite bentutz Browser Cookies</h1>
+    <p class="text-blue-800">Lorem ipsum, dolor sit amet consectetur adipisicing elit. Minima deleniti veritatis, fugit in ab aperiam accusantium numquam, aliquid voluptatibus, iure iste quibusdam vero ad quod odio molestiae doloremque a. Soluta. <a href="https://developer.mozilla.org/en-US/docs/Web/HTTP/Cookies">Mehr infos</a></p>
+    <Button text="Akzeptieren" onclick="document.querySelector('.banner').classList.add('hidden')"/>
+
+
+</div>

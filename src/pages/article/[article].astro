@@ -39,13 +39,14 @@ async function fetchWeatherData() {
 }
 
 async function fetchArticleData(slug: string) {
-  let articleData: { name: string; content: string } | null = null;
+  let articleData: { id: number; name: string; content: string } | null = null;
   try {
     const res = await fetch(`https://wp.fiosproject.de/wp-json/wp/v2/posts?slug=${slug}`);
     if (!res.ok) throw new Error(`Failed to fetch article data. Status: ${res.status}`);
     const data = await res.json();
     if (data.length > 0) {
       articleData = {
+        id: data[0].id,
         name: data[0].title.rendered,
         content: data[0].content.rendered,
       };
@@ -150,12 +151,14 @@ const pageTitle = `PINGUIN | ${article}`;
       <!-- Comment Form -->
       <div class="max-w-3xl mx-auto p-6 bg-blue-100 rounded-3xl shadow-lg flex-1 h-fit">
         <h1>Kommentar Verfassen</h1>
-        <form onSubmit={(e) => {
+        <form onSubmit={async (e) => {
           e.preventDefault();
           const form = e.target as HTMLFormElement;
           const name = (form.elements.namedItem("name") as HTMLInputElement).value;
           const comment = (form.elements.namedItem("comment") as HTMLTextAreaElement).value;
-          sendComment(articleData?.id, name, comment);
+          if (articleData) {
+            await sendComment(articleData.id, name, comment);
+          }
         }} class="mx-auto">
           <div class="mb-5">
             <label for="name" class="block mb-2 text-sm font-medium text-gray-900">Dein Name</label>

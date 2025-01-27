@@ -1,0 +1,111 @@
+---
+import Button from "./Button.astro"
+import Split from "../layouts/Split.astro"
+---
+
+<style>
+    .center {
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        transform: translate(-50%, -50%);
+        z-index: 101;
+    }
+    .cover {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        backdrop-filter: blur(10px);
+        z-index: 100;
+        animation-name: comein;
+        animation-duration: 2s;
+    }
+
+    @keyframes comein {
+        0% {
+            backdrop-filter: blur(0px);
+        }
+
+        100% {
+            backdrop-filter: blur(10px);
+        }
+    }
+
+    .popup {
+        max-width: 800px;
+        padding: 2rem;
+    }
+
+    .popup h1 {
+        margin-bottom: 1rem;
+    }
+
+    .popup p {
+        margin-bottom: 2rem;
+    }
+
+    .popup img {
+        max-width: 100%;
+        height: auto;
+        border-radius: 1.5rem;
+    }
+
+    .popup button {
+        display: block;
+        width: 100%;
+        padding: 1rem;
+        font-size: 1.25rem;
+        text-align: center;
+        background-color: #3b82f6;
+        color: white;
+        border: none;
+        border-radius: 0.75rem;
+        cursor: pointer;
+        transition: background-color 0.3s ease;
+    }
+
+    .popup button:hover {
+        background-color: #2563eb;
+    }
+
+    .widget-container {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        height: 100%;
+    }
+</style>
+<!-- <div class="cover"></div>
+<div class="popup center bg-blue-200 rounded-3xl bg-clip-padding backdrop-filter backdrop-blur-3xl bg-opacity-20 ring-1 ring-blue-200">
+    <Split>
+    <div slot="Articles">
+        <div class="p1">
+            <h1 class="text-5xl text-blue-300 font-bold" id="title">Wilkommen bei PINGUIN</h1>
+            <div class="w-96">
+                <p class="text-blue-950">Lorem ipsum dolor sit amet consectetur adipisicing elit. Animi provident id ut qui asperiores velit doloremque maiores minus et eos necessitatibus rem eaque fuga sunt tempore adipisci distinctio, aliquid veniam?</p>
+            </div>
+            <Button text="Einrichtung starten" href="#p2" onclick="p2()"/>
+        </div>
+
+    </div>
+
+    <div slot="Widgets" class="widget-container">
+        <img src="https://images.unsplash.com/photo-1632547804201-802c799a10fd?q=80&w=2487&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D" alt="" class="rounded-3xl">
+    </div>
+    </Split>
+
+</div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        if(window.location.hash === "#p2") {
+            const titleElement = document.getElementById("title");
+            if (titleElement) {
+                titleElement.innerText = "Algeimene Geschäftsbedingungen";
+            }
+        }
+    });
+
+</script>-->

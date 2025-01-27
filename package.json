@@ -10,10 +10,10 @@
     "weatherserver": "node src/api/fetchweather.js"
   },
   "dependencies": {
-    "@astrojs/node": "^9.0.0",
+    "@astrojs/node": "^9.0.1",
     "@astrojs/tailwind": "^5.1.4",
     "aos": "^2.3.4",
-    "astro": "^5.1.1",
+    "astro": "^5.1.7",
     "bootstrap-icons": "^1.11.3",
     "corn": "^0.0.1",
     "dotenv": "^16.4.7",

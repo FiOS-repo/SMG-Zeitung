@@ -61,9 +61,12 @@ const formattedPosts = posts.map(post => ({
 	}));
 ---
 <Main pageTitle={pageTitle}>
-	<Header/>
+
 	<Split>
+
+
 		<div slot="Articles">
+
 			{formattedPosts.map((post) => (
 				<Card
 					title={post.title.rendered}
