@@ -1,0 +1,27 @@
+---
+const { name, bio, image } = Astro.props;
+---
+
+<div class="author-card bg-blue-200 rounded-3xl bg-clip-padding backdrop-filter backdrop-blur-3xl bg-opacity-20 ring-1 ring-blue-200 p-6 shadow-lg flex flex-col items-center justify-between w-full mb-10">
+  <img src={image} alt={name} class="author-image rounded-full h-32 w-32 mb-4" />
+  <img src="https://upload.wikimedia.org/wikipedia/commons/9/91/Octicons-mark-github.svg" alt="" class="h-7 opacity-50 hover:opacity-100 duration-500">
+  <h3 class="author-name text-2xl font-bold text-blue-800">{name}</h3>
+  <p class="author-bio text-lg mt-2 text-blue-800">{bio}</p>
+</div>
+
+<style>
+.author-card {
+  width: 200px;
+}
+.author-image {
+  border-radius: 50%;
+}
+.author-name {
+  font-size: 1.25rem;
+  margin: 0.5rem 0;
+}
+.author-bio {
+  font-size: 1rem;
+  color: #666;
+}
+</style>

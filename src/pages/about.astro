@@ -5,13 +5,37 @@ import Weather from "../components/widgets/Weather.astro";
 import Poll from "../components/widgets/Poll.astro";
 import NewArticles from "../components/widgets/NewArticles.astro";
 import Hashtags from "../components/widgets/Hashtags.astro";
+import AuthorCard from "../components/AuthorCard.astro";
+
+// Fetch weather data
+let weatherData: WeatherData = {};
+try {
+	const res = await fetch("http://localhost:3000/weather");
+	if (!res.ok) throw new Error(`Failed to fetch weather data. Status: ${res.status}`);
+	weatherData = await res.json();
+	} catch (error) {
+	console.error("Error fetching weather data:", error);
+	}
+
+// Constants
+const pageTitle = "PINGUIN | Startseite";
+const question = "Welches Betriebssystem verwenden Sie am häufigsten?";
+const answers = JSON.stringify(["Windows", "macOS", "Linux", "Andere"]);
+
 
 ---
+
+
 
 <Main>
     <Split>
         <div slot="Articles">
-
+            <h1 class=" text-5xl text-blue-900 font-bold">Admins</h1>
+            <AuthorCard 
+                name="Finn Joshua Bartels" 
+                bio="Finn Bartels ist ein Programmierer set er 6 ist" 
+                image="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRfyaWb61uMlgjnENgFIsRa8qO2ORnNiiZJoQ&s" 
+            />
         </div>
         <div slot="Widgets">
             <Weather degrees={weatherData.temperature} iconurl={weatherData.iconurl} />

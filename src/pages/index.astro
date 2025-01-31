@@ -4,6 +4,7 @@ import Split from "../layouts/Split.astro";
 import Card from "../components/Card.astro";
 import Pagination from "../components/Pagination.astro";
 import Header from "../components/header.astro";
+import AuthorCard from '../components/AuthorCard.astro';
 
 // Import widgets
 import Weather from "../components/widgets/Weather.astro";
@@ -86,4 +87,5 @@ const formattedPosts = posts.map(post => ({
 			<Hashtags hashtags="Video, Essen, dsa" />
 		</div>
 	</Split>
+
 </Main>

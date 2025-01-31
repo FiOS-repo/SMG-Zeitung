@@ -23,15 +23,16 @@ document.addEventListener('DOMContentLoaded', () => {
       if (categoriesContainer) {
         categoriesContainer.innerHTML = data.map((category) => `
           <a href="/category/${category.id}">
-            <button class="bg-blue-200 text-blue-800 font-bold py-2 px-4 mr-5 rounded-lg hover:bg-blue-300 duration-700">${category.name}</button>
+            <button class="bg-blue-200 mr-5 rounded-3xl bg-clip-padding backdrop-filter backdrop-blur-3xl bg-opacity-20 ring-1 ring-blue-200 fill-blue-200 text-blue-800 font-bold py-2 px-4 hover:bg-opacity-40 duration-700 mt-4">${category.name}</button>
           </a>
         `).join('');
 
         // Add the back button after setting the categories
         const backButton = document.createElement('button');
-        backButton.className = 'bg-blue-200 text-blue-800 font-bold py-2 px-4 mr-5 rounded-lg hover:bg-blue-300 duration-700 toggle-categories flex items-center';
+        backButton.className = 'bg-blue-200 mr-5 rounded-3xl bg-clip-padding backdrop-filter backdrop-blur-3xl bg-opacity-20 ring-1 ring-blue-200 fill-blue-200 text-blue-800 font-bold py-2 px-4 hover:bg-opacity-40 duration-700 mt-4';
         backButton.innerHTML = '<img src="/src/assets/back-arrow-icon.svg" alt="Back icon" class="w-4 h-4 mr-2 fill-blue-800" /> Zurück';
         categoriesContainer.appendChild(backButton);
+        
 
         // Add event listener to the back button
         backButton.addEventListener('click', toggleCategories);
@@ -51,7 +52,7 @@ document.addEventListener('DOMContentLoaded', () => {
 <div class="navbar py-3 px-3 fixed top-0 left-1/2 transform -translate-x-1/2 z-40 mt-5 rounded-full bg-blue-200bg-clip-padding backdrop-filter backdrop-blur-3xl bg-opacity-20 ring-1 ring-blue-200 shadow-2xl flex items-center justify-center transition-all duration-500">
   <div class="default-nav ">
     <a href="/"><button class="bg-blue-200 rounded-3xl bg-clip-padding backdrop-filter backdrop-blur-3xl bg-opacity-20 ring-1 ring-blue-200 fill-blue-200 text-blue-800 font-bold py-2 px-4 hover:bg-opacity-40 duration-700">Startseite</button></a>
-    <a href="/"><button class="bg-blue-200 rounded-3xl ml-4 bg-clip-padding backdrop-filter backdrop-blur-3xl bg-opacity-20 ring-1 ring-blue-200 fill-blue-200 text-blue-800 font-bold py-2 px-4 hover:bg-opacity-40 duration-700">Über uns</button></a>
+    <a href="/about"><button class="bg-blue-200 rounded-3xl ml-4 bg-clip-padding backdrop-filter backdrop-blur-3xl bg-opacity-20 ring-1 ring-blue-200 fill-blue-200 text-blue-800 font-bold py-2 px-4 hover:bg-opacity-40 duration-700">Über uns</button></a>
     <button class="bg-blue-200 rounded-3xl bg-clip-padding backdrop-filter backdrop-blur-3xl bg-opacity-20 ml-4 ring-1 ring-blue-200 fill-blue-200 text-blue-800 font-bold py-2 px-4 hover:bg-opacity-40 duration-700 toggle-categories">Kategorien</button>
   </div>
   <div class="categories-container hidden">
