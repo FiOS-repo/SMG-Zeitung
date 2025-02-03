@@ -1,85 +1,95 @@
----
----
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Custom Cursor - Old Design</title>
+    <style>
+      body {
+        user-select: none;
+        cursor: none; /* Hide default cursor */
+      }
+      /* Additional interactive state styles */
+      .custom-cursor {
+        transition: transform 0.1s ease-out, width 0.2s ease-out, height 0.2s ease-out;
+        z-index: 999;
+      }
+      .custom-cursor.click,
+      .custom-cursor.drag {
+        width: 40px;
+        height: 40px;
+      }
+      .custom-cursor.dragging {
+        width: 60px;
+        height: 40px;
+      }
+      button:hover ~ .custom-cursor,
+      p:hover ~ .custom-cursor,
+      span:hover ~ .custom-cursor {
+        opacity: 0;
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Original design restored -->
+    <div
+      class="custom-cursor ring-1 ring-blue-300 w-6 h-6 rounded-full absolute pointer-events-none transition-transform ease-out duration-100 transform -translate-x-1/2 -translate-y-1/2 z-50 top-0 left-0 bg-white bg-opacity-30 backdrop-filter backdrop-blur-lg"
+    ></div>
+    <script>
+      document.addEventListener("DOMContentLoaded", () => {
+        const cursor = document.querySelector(".custom-cursor");
+        let mouseX = 0,
+          mouseY = 0;
+        let posX = 0,
+          posY = 0;
 
-<style>
+        document.addEventListener("mousemove", (e) => {
+          mouseX = e.clientX;
+          mouseY = e.clientY;
+        });
 
-  body {
-    user-select: none;
-    cursor: none; /* Hide the default cursor */
-  }
+        // Use JS interpolation, then combine with the Tailwind offset.
+        function animateCursor() {
+          posX += (mouseX - posX) * 0.2;
+          posY += (mouseY - posY) * 0.2;
+          // Instead of subtracting half of width/height, we append translate(-50%, -50%)
+          cursor.style.transform = `translate(${posX}px, ${posY}px) translate(-50%, -50%)`;
+          requestAnimationFrame(animateCursor);
+        }
+        animateCursor();
 
-  .custom-cursor {
-    transition: transform 0.1s ease-out, width 0.2s ease-out, height 0.2s ease-out;
-    z-index: 999;
-  }
+        // Interactive state events
+        document.addEventListener("mousedown", () => {
+          cursor.classList.add("dragging");
+        });
 
-  .custom-cursor.click, .custom-cursor.drag {
-    width: 40px; /* Increase size on click or drag */
-    height: 40px; /* Increase size on click or drag */
-  }
+        document.addEventListener("mouseup", () => {
+          cursor.classList.remove("dragging");
+        });
 
-  .custom-cursor.dragging {
-    width: 60px;
-    height: 40px;
-  }
+        document.addEventListener("click", () => {
+          cursor.classList.add("click");
+          setTimeout(() => {
+            cursor.classList.remove("click");
+          }, 200);
+        });
 
-  button:hover ~ .custom-cursor, p:hover ~ .custom-cursor, span:hover ~ .custom-cursor {
-    opacity: 0;
-  }
-</style>
-<script>
-  document.addEventListener("DOMContentLoaded", () => {
-    const cursor = document.querySelector(".custom-cursor");
-    let isDragging = false;
-    let mouseX = 0, mouseY = 0;
-    let cursorX = 0, cursorY = 0;
+        document.addEventListener("dragstart", () => {
+          cursor.classList.add("drag");
+        });
 
-    document.addEventListener("mousemove", (e) => {
-      mouseX = e.clientX;
-      mouseY = e.clientY;
-    });
+        document.addEventListener("dragend", () => {
+          cursor.classList.remove("drag");
+        });
 
-    function animateCursor() {
-      cursorX += (mouseX - cursorX) * 0.2;
-      cursorY += (mouseY - cursorY) * 0.2;
-      cursor.style.transform = `translate(${cursorX - cursor.offsetWidth / 2}px, ${cursorY - cursor.offsetHeight / 2}px)`;
-      requestAnimationFrame(animateCursor);
-    }
-    requestAnimationFrame(animateCursor);
-
-    document.addEventListener("mousedown", () => {
-      isDragging = true;
-      cursor.classList.add("dragging");
-    });
-
-    document.addEventListener("mouseup", () => {
-      isDragging = false;
-      cursor.classList.remove("dragging");
-    });
-
-    document.addEventListener("click", () => {
-      cursor.classList.add("click");
-      setTimeout(() => {
-        cursor.classList.remove("click");
-      }, 200); // Duration of the animation
-    });
-
-    document.addEventListener("dragstart", () => {
-      cursor.classList.add("drag");
-    });
-
-    document.addEventListener("dragend", () => {
-      cursor.classList.remove("drag");
-    });
-
-    document.querySelectorAll("button").forEach(element => {
-      element.addEventListener("mouseenter", () => {
-        cursor.style.opacity = 0;
+        document.querySelectorAll("button").forEach((btn) => {
+          btn.addEventListener("mouseenter", () => {
+            cursor.style.opacity = 0;
+          });
+          btn.addEventListener("mouseleave", () => {
+            cursor.style.opacity = 1;
+          });
+        });
       });
-      element.addEventListener("mouseleave", () => {
-        cursor.style.opacity = 1;
-      });
-    });
-  });
-</script>
-<div class="custom-cursor ring-1 ring-blue-300 w-6 h-6 rounded-full absolute pointer-events-none transition-transform ease-out duration-100 transform -translate-x-1/2 -translate-y-1/2 z-50 top-0 left-0 bg-white bg-opacity-30 backdrop-filter backdrop-blur-lg"></div>
+    </script>
+  </body>
+</html>

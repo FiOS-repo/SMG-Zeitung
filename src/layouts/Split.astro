@@ -1,11 +1,16 @@
-<div class="relative max-w-6xl mx-auto space-y-8">
+---
+import Update from "@/components/Update.astro"
+---
+
+<div class="relative max-w-6xl mx-auto space-y-8 mt-7">
     <div class="relative">
         <img src="https://images.unsplash.com/photo-1619252584172-a83a949b6efd?q=80&w=2574&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
             alt="Image description"
             class="mb-6 w-full rounded-3xl h-96 object-cover ring-1 ring-blue-200" />
         <div class="absolute inset-0 flex items-center justify-center">
-            <div class=" bg-opacity-75 p-4 rounded-lg z-50">
-                <h1 class="text-7xl text-blue-950 font-bold">SMGZ</h1>
+            <div class="bg-opacity-75 p-4 rounded-lg z-50 flex flex-col items-center">
+                <Update />
+                <h1 class="text-7xl text-blue-950 font-bold mt-1">SMGZ</h1>
             </div>
         </div>
     </div>
