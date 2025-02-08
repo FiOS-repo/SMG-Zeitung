@@ -1,10 +1,13 @@
 ---
+export const prerender = false; // Disable prerendering so query params are processed
+
 import Main from "../layouts/Main.astro";
 import Split from "../layouts/Split.astro";
 import Card from "../components/Card.astro";
 import Pagination from "../components/Pagination.astro";
 import Header from "../components/header.astro";
-import AuthorCard from '../components/AuthorCard.astro';
+import AuthorCard from "../components/AuthorCard.astro";
+import Button from "@/components/Button.astro";
 
 // Import widgets
 import Weather from "../components/widgets/Weather.astro";
@@ -18,16 +21,16 @@ interface Post {
 	excerpt: { rendered: string };
 	link: string;
 	_embedded: {
-	'wp:featuredmedia'?: [{ source_url: string }];
-	'wp:term'?: Array<Array<{ name: string }>>;
-};
+		'wp:featuredmedia'?: [{ source_url: string }];
+		'wp:term'?: Array<Array<{ name: string }>>;
+	};
 }
 
 interface WeatherData {
 	description?: string;
 	temperature?: number;
 	iconurl?: string;
-	}
+}
 
 // Fetch posts
 let posts: Post[] = [];
@@ -35,9 +38,9 @@ try {
 	const res = await fetch("https://wp.fiosproject.de/wp-json/wp/v2/posts?_embed");
 	if (!res.ok) throw new Error(`Failed to fetch posts. Status: ${res.status}`);
 	posts = await res.json();
-	} catch (error) {
+} catch (error) {
 	console.error("Error fetching posts:", error);
-	}
+}
 
 // Fetch weather data
 let weatherData: WeatherData = {};
@@ -45,11 +48,11 @@ try {
 	const res = await fetch("http://localhost:3000/weather");
 	if (!res.ok) throw new Error(`Failed to fetch weather data. Status: ${res.status}`);
 	weatherData = await res.json();
-	} catch (error) {
+} catch (error) {
 	console.error("Error fetching weather data:", error);
-	}
+}
 
-// Constants
+// Constants for the page
 const pageTitle = "PINGUIN | Startseite";
 const question = "Welches Betriebssystem verwenden Sie am häufigsten?";
 const answers = JSON.stringify(["Windows", "macOS", "Linux", "Andere"]);
@@ -59,16 +62,50 @@ const formattedPosts = posts.map(post => ({
 	...post,
 	formattedLink: post.link.replace("https://wp.fiosproject.de/archive/", "/article/"),
 	hashtags: post._embedded?.['wp:term']?.flat().map(term => term.name).join(', ') || '',
-	}));
+}));
+
+// ---------- PAGINATION LOGIC ----------
+// Number of posts per page
+const postsPerPage = 5;
+
+// Read the current page from the URL query parameters.
+// If no query parameter is provided, default to page 1.
+const url = new URL(Astro.request.url);
+const currentPage = parseInt(url.searchParams.get("page") || "1", 10);
+
+// Calculate the total number of pages
+const totalPages = Math.ceil(formattedPosts.length / postsPerPage);
+
+// Slice the posts array to display only the posts for the current page
+const startIndex = (currentPage - 1) * postsPerPage;
+const endIndex = currentPage * postsPerPage;
+const postsToDisplay = formattedPosts.slice(startIndex, endIndex);
+
+// Determine which page numbers to show in the pagination component
+const activePage = currentPage;
+const nextPage = currentPage < totalPages ? currentPage + 1 : null;
+const nextNextPage = currentPage + 1 < totalPages ? currentPage + 2 : null;
 ---
+
 <Main pageTitle={pageTitle}>
-
 	<Split>
-
-
 		<div slot="Articles">
-
-			{formattedPosts.map((post) => (
+			<div class="bg-blue-200 rounded-3xl bg-clip-padding backdrop-filter backdrop-blur-3xl bg-opacity-20 ring-1 ring-blue-200 p-2 mb-8" id="developer-options">
+				<h1 class="text-blue-900 font-bold text-3xl mt-4 ml-4">Developer Options</h1>
+				<button class="bg-red-500 rounded-3xl bg-clip-padding backdrop-filter backdrop-blur-3xl bg-opacity-20 ring-1 ring-red-500 p-4" onclick="localStorage.clear(); alert('Localstorage Gelöscht')">DELETE LOCALSTORAGE</button>
+				<a href="/debug">
+					<button class="bg-blue-200 ml-5 rounded-3xl bg-clip-padding backdrop-filter backdrop-blur-3xl bg-opacity-20 ring-1 ring-blue-200 p-4">Goto Developer Options</button>
+				</a>
+			</div>
+			<script>
+				document.getElementById('developer-options').style.display = 'none';
+				if (localStorage.getItem('developer-options') === 'true') {
+					document.getElementById('developer-options').style.display = 'block';
+				}
+			</script>
+			
+			{/* Render posts for the current page */}
+			{postsToDisplay.map((post) => (
 				<Card
 					title={post.title.rendered}
 					description={post.excerpt.rendered}
@@ -77,15 +114,19 @@ const formattedPosts = posts.map(post => ({
 					hashtags={post.hashtags}
 				/>
 			))}
-			<Card title="Hallo Welt" description="Das ist ein Test" hashtags="example, sample, test" />
-			<Pagination active="1" next="2" nextnext="3" /> {/* TODO: Make Pagination work */}
+
+			{/* Render the Pagination component with dynamic values */}
+			<Pagination 
+				active={activePage.toString()} 
+				next={nextPage ? nextPage.toString() : undefined} 
+				nextnext={nextNextPage ? nextNextPage.toString() : undefined}
+			/>
 		</div>
 		<div slot="Widgets">
 			<Weather degrees={weatherData.temperature} iconurl={weatherData.iconurl} />
 			<Poll question={question} answers={answers} />
 			<NewArticles articles={["Artikel 1", "Artikel 2", "Artikel 3"]} />
-			<Hashtags hashtags="Video, Essen, dsa" />
+			<Hashtags hashtags={["Video", "Essen", "dsa"]} />
 		</div>
 	</Split>
-
 </Main>

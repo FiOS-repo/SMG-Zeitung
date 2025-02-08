@@ -8,28 +8,7 @@ import { GooeyText } from "@/components/ui/gooey-text-morphing"
 ---
 <script src="https://cdn.jsdelivr.net/gh/google/code-prettify@master/loader/run_prettify.js"></script>
 <Main>
-  <div class="relative flex h-[500px] w-full flex-col items-center justify-center overflow-hidden rounded-lg border bg-background md:shadow-xl">
-    <span class="pointer-events-none whitespace-pre-wrap bg-gradient-to-b from-black to-gray-300/80 bg-clip-text text-center text-8xl font-semibold leading-none text-transparent dark:from-white dark:to-slate-900/10">
-      Particles
-    </span>
-    <Particles
-      class="absolute inset-0"
-      quantity={100}
-      ease={80}
-      color=#ffffff
-      refresh
-    />
-  </div>
-    <div class="h-[200px] flex items-center justify-center">
-        <GooeyText
-          texts={["Pinguin", "Engineering", "Is", "Awesome"]}
-          morphTime={1}
-          cooldownTime={0.25}
-          className="font-bold"
-        />
-      </div>
-    <Button>ShadCN</Button>
-    <Video>
+    <button class="bg-red-600 w-72 h-40" onclick="localStorage.clear();">DELETE LOCALSTORAGE</button>
     <h1>Debugging</h1>
     <h1>Headings</h1>
     <h1>Heading 1</h1>

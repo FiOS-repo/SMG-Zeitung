@@ -120,14 +120,14 @@ const pageTitle = `PINGUIN | ${article}`;
       <div class="max-w-3xl mx-auto p-6 bg-blue-200 rounded-3xl bg-clip-padding backdrop-filter backdrop-blur-3xl bg-opacity-20 ring-1 ring-blue-200 p-6 shadow-lg  flex-1 h-fit mb-5">
         {articleData && (
             <div>
-              <h1 class="text-3xl text-blue-900 font-bold">{articleData.name}</h1>
+              <h1 class="text-3xl text-blue-900 font-bold" id="title">{articleData.name}</h1>
               <div id="content" set:html={articleData.content}></div>
             </div>
         )}
         {!articleData && <p>Artikel konnte nicht geladen werden.</p>}
       </div>
 
-      <!-- Comment Section -->
+      <!-- Comment Section 
       <div class="max-w-3xl mx-auto p-6 bg-blue-100 rounded-3xl shadow-lg flex-1 h-fit mb-5">
         <h1>Kommentare</h1>
         {comments.length > 0 ? (
@@ -148,7 +148,7 @@ const pageTitle = `PINGUIN | ${article}`;
         )}
       </div>
 
-      <!-- Comment Form -->
+       Comment Form 
       <div class="max-w-3xl mx-auto p-6 bg-blue-100 rounded-3xl shadow-lg flex-1 h-fit">
         <h1>Kommentar Verfassen</h1>
         <form onSubmit={async (e) => {
@@ -171,7 +171,55 @@ const pageTitle = `PINGUIN | ${article}`;
           <button type="submit" class="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm w-full sm:w-auto px-5 py-2.5 text-center">Submit</button>
         </form>
       </div>
-    </div>
+      -->
+      <div class="bg-blue-200 rounded-3xl bg-clip-padding backdrop-filter backdrop-blur-3xl bg-opacity-20 ring-1 ring-blue-200 flex flex-col justify-center items-center p-6 shadow-lg w-full mb-10">
+        <h1 class="text-blue-900">Wie fandest du diesen Beitrag</h1> 
+        <div class="mt-5 flex justify-center items-center">
+          <img src="/src/assets/star-svgrepo-com.svg" alt="" class="h-16 opacity-60 mx-2 hover:h-20 hover:rotate-12 duration-500" id="star">
+          <img src="/src/assets/star-svgrepo-com.svg" alt="" class="h-16 opacity-60 mx-2 hover:h-20 hover:rotate-12 duration-500" id="star">
+          <img src="/src/assets/star-svgrepo-com.svg" alt="" class="h-16 opacity-60 mx-2 hover:h-20 hover:rotate-12 duration-500" id="star">
+          <img src="/src/assets/star-svgrepo-com.svg" alt="" class="h-16 opacity-60 mx-2 hover:h-20 hover:rotate-12 duration-500" id="star">
+          <img src="/src/assets/star-svgrepo-com.svg" alt="" class="h-16 opacity-60 mx-2 hover:h-20 hover:rotate-12 duration-500" id="star">
+        </div>
+        <script>
+          document.addEventListener('DOMContentLoaded', () => {
+            const articleName = document.getElementById("title")?.innerText;
+            const ratedKey = `rated_${articleName}`;
+            const ratingKey = `rating_${articleName}`;
+            const rated = localStorage.getItem(ratedKey);
+            const rating = localStorage.getItem(ratingKey);
+            const stars = document.querySelectorAll('#star');
+            
+            if (rated && rating) {
+              stars.forEach((star, index) => {
+                if (index < rating) {
+                  star.src = '/src/assets/star-svgrepo-com.svg';
+                } else {
+                  star.src = '/src/assets/star-svgrepo-com-empty.svg';
+                }
+                star.style.pointerEvents = 'none';
+              });
+            } else {
+              stars.forEach((star, index) => {
+                star.addEventListener('click', () => {
+                  localStorage.setItem(ratedKey, 'true');
+                  localStorage.setItem(ratingKey, index + 1);
+                  fetch(`http://localhost:3000/api/star?stars=${index + 1}&article=${articleName}`);
+                  stars.forEach((s, i) => {
+                    if (i <= index) {
+                      s.src = '/src/assets/star-svgrepo-com.svg';
+                    } else {
+                      s.src = '/src/assets/star-svgrepo-com-empty.svg';
+                    }
+                    s.style.pointerEvents = 'none';
+                  });
+                });
+              });
+            }
+          });
+        </script>
+      </div>
+        </div>
 
     <div slot="Widgets">
       <Weather degrees={weatherData.temperature} iconurl={weatherData.iconurl} />
