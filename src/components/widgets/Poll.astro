@@ -1,42 +1,94 @@
 ---
+// No server-side code here—only the markup.
 import Button from "../Button.astro";
-const { question, answers }: { question: string; answers: string | string[] } = Astro.props;
-let parsedAnswers: string[] = [];
-if (typeof answers === "string") {
-    try {
-        const parsed = JSON.parse(answers);
-        if (Array.isArray(parsed) && parsed.every((item) => typeof item === "string")) {
-            parsedAnswers = parsed;
-        } else {
-            console.error("Parsed answers is not a valid array of strings.");
-        }
-    } catch (e) {
-        console.error("Invalid JSON in answers prop:", e);
-    }
-} else if (Array.isArray(answers)) {
-
-    parsedAnswers = answers.filter((item) => typeof item === "string")
-} else {
-    console.error("Invalid type for answers prop. Expected string or string[].");
-}
 ---
-<!-- TODO: Pick Random Poll-->
 <div class="bg-blue-200 rounded-3xl bg-clip-padding backdrop-filter backdrop-blur-3xl bg-opacity-20 ring-1 ring-blue-200 p-6 shadow-lg mb-10 w-full">
-    <div class="text-2xl text-blue-900 font-bold">Umfrage</div>
-    <div class="mt-4">
-        <p class="text-lg text-gray-800">{question}</p>
-        <div class="mt-4">
-            {parsedAnswers.length > 0 ? (
-                parsedAnswers.map((answer: string, index: number) => (
-                        <label key={index} class="flex items-center mb-2">
-                            <input type="radio" name="os" class="mr-2" />
-                            <span class="text-gray-700">{answer}</span>
-                        </label>
-                ))
-            ) : (
-                    <p class="text-gray-500">Keine Antworten verfügbar.</p>
-            )}
-        </div>
+  <div class="text-2xl text-blue-900 font-bold">Umfrage</div>
+  <div class="mt-4">
+    <p id="question" class="text-lg text-gray-800">Lädt...</p>
+    <div id="answers" class="mt-4">
+      <p class="text-gray-500">Lädt Antworten...</p>
     </div>
-    <Button text="Abstimmen" />
+  </div>
+  <!-- Note: the Button component uses the onclick prop which will trigger the global submitAnswer() -->
+  <Button text="Abstimmen" onclick="submitAnswer()" />
 </div>
+
+<!-- All browser-specific code is placed inside this client:load script tag -->
+<script client:load>
+  let question = "Lädt...";
+  let parsedAnswers = [];
+  let selectedAnswer = "";
+  let pollId = 0;
+
+  // Update the UI based on fetched data
+  function updateUI() {
+    document.getElementById("question").innerText = question;
+    const answersContainer = document.getElementById("answers");
+    answersContainer.innerHTML = "";
+    parsedAnswers.forEach(answer => {
+      const label = document.createElement("label");
+      label.className = "flex items-center mb-2";
+      label.innerHTML = `
+        <input type="radio" name="os" class="mr-2" value="${answer}" onchange="setSelectedAnswer('${answer}')" />
+        <span class="text-gray-700">${answer}</span>
+      `;
+      answersContainer.appendChild(label);
+    });
+  }
+
+  // Global function to update the selected answer (accessible from inline event handlers)
+  window.setSelectedAnswer = (answer) => {
+    selectedAnswer = answer;
+  };
+
+  // Fetch poll data from the API and update the UI
+  function loadPoll() {
+    fetch("http://localhost:3000/api/poll/")
+      .then(response => {
+        if (!response.ok) {
+          throw new Error("Fehler beim Laden der Umfrage");
+        }
+        return response.json();
+      })
+      .then(data => {
+        question = data.question;
+        parsedAnswers = data.options;
+        pollId = data.id;
+        updateUI();
+      })
+      .catch(error => {
+        console.error("Fehler beim Abrufen der Umfrage:", error);
+        question = "Fehler beim Laden der Umfrage.";
+        updateUI();
+      });
+  }
+
+  // Submit the selected answer to the API
+  function submitAnswer() {
+    if (!selectedAnswer) {
+      alert("Bitte wähle eine Antwort aus.");
+      return;
+    }
+
+    fetch(`http://localhost:3000/api/poll/answer?id=${pollId}&answer=${selectedAnswer}`, {
+      method: "GET"
+    })
+      .then(response => {
+        if (!response.ok) {
+          throw new Error("Fehler beim Absenden der Antwort");
+        }
+        return response.text();
+      })
+      .then(data => {
+
+      })
+      .catch(error => {
+        console.error("Fehler beim Absenden:", error);
+        alert("Fehler beim Speichern der Antwort.");
+      });
+  }
+
+  // Run loadPoll once the DOM content is loaded
+  document.addEventListener("DOMContentLoaded", loadPoll);
+</script>

@@ -54,6 +54,37 @@ app.get("/api/star/stats", (req, res) => {
     });
 });
 
+app.get("/api/poll/", (_, res) => {
+    fs.readFile("polls.json", "utf8", function(err, data) {
+        if (err) {
+            res.sendStatus(500).send("Error reading polls.json");
+            return;
+        }
+        let json = JSON.parse(data);
+        let length = json.length;
+        let index = Math.floor(Math.random() * length);
+        res.send(json[index]);
+    });
+});
+
+app.get("/api/poll/answer", (req, res) => {
+    let id = req.query.id;
+    let answer = req.query.answer;
+
+    if (!id || !answer) {
+        res.sendStatus(400).send("Fehlende id oder answer Parameter");
+        return;
+    }
+
+    fs.appendFile("polls.csv", `${id},${answer}\n`, function(err) {
+        if (err) {
+            res.sendStatus(500).send("Error writing answer");
+            return;
+        }
+        res.send("Answer saved");
+    });
+});
+
 app.listen(3000, () => {
     console.log("Server is running on port 3000");
 });

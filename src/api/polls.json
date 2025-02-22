@@ -1,0 +1,42 @@
+[
+    {
+        "id": 1,
+        "question": "Was ist deine Lieblingsfarbe?",
+        "options": [
+            "Rot",
+            "Blau",
+            "Grün",
+            "Gelb"
+        ]
+    },
+    {
+        "id": 2,
+        "question": "Was ist deine Lieblingsjahreszeit?",
+        "options": [
+            "Frühling",
+            "Sommer",
+            "Herbst",
+            "Winter"
+        ]
+    },
+    {
+        "id": 3,
+        "question": "Welche Art von Filmen bevorzugst du?",
+        "options": [
+            "Action",
+            "Komödie",
+            "Drama",
+            "Horror"
+        ]
+    },
+    {
+        "id": 4,
+        "question": "Was ist dein bevorzugtes Transportmittel?",
+        "options": [
+            "Auto",
+            "Fahrrad",
+            "Öffentliche Verkehrsmittel",
+            "Zu Fuß"
+        ]
+    }
+]
