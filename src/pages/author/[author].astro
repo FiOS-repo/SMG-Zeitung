@@ -1,0 +1,134 @@
+---
+const { author } = Astro.params;
+
+import "../../styles/input.css";
+import Main from "../../layouts/Main.astro";
+import Split from "../../layouts/Split.astro";
+import Card from "../../components/Card.astro";
+
+// Import Widgets
+import Weather from "../../components/widgets/Weather.astro";
+import Poll from "../../components/widgets/Poll.astro";
+import NewArticles from "../../components/widgets/NewArticles.astro";
+import Hashtags from "../../components/widgets/Hashtags.astro";
+
+interface WeatherData {
+  description?: string;
+  temperature?: number;
+  iconurl?: string;
+}
+
+interface AuthorData {
+  id: number;
+  name: string;
+  description: string;
+  avatar_urls: {
+    [key: string]: string;
+  };
+  acf?: {
+    position?: string;
+    social_media?: {
+      twitter?: string;
+      linkedin?: string;
+    };
+  };
+}
+
+// Fetch weather data
+let weatherData: WeatherData = {};
+try {
+  const res = await fetch("http://localhost:3000/weather");
+  if (!res.ok) throw new Error(`Failed to fetch weather data. Status: ${res.status}`);
+  weatherData = await res.json();
+} catch (error) {
+  console.error("Error fetching weather data:", error);
+}
+
+// Fetch author data
+let authorData: AuthorData | null = null;
+try {
+  // First get author by slug to get ID
+  const authorResponse = await fetch(`https://wp.fiosproject.de/wp-json/wp/v2/users?slug=${author}`);
+  if (!authorResponse.ok) throw new Error(`Failed to fetch author. Status: ${authorResponse.status}`);
+  const authors = await authorResponse.json();
+  
+  if (authors.length > 0) {
+    // Then get detailed author data by ID
+    const authorDetailResponse = await fetch(`https://wp.fiosproject.de/wp-json/wp/v2/users/${authors[0].id}`);
+    if (!authorDetailResponse.ok) throw new Error(`Failed to fetch author details. Status: ${authorDetailResponse.status}`);
+    authorData = await authorDetailResponse.json();
+  }
+} catch (error) {
+  console.error("Error fetching author data:", error);
+}
+
+// Fetch author's posts
+let authorPosts = [];
+try {
+  const authorId = authorData?.id;
+  const res = await fetch(`https://wp.fiosproject.de/wp-json/wp/v2/posts?_embed&author=${authorId}`);
+  if (!res.ok) throw new Error(`Failed to fetch posts. Status: ${res.status}`);
+  authorPosts = await res.json();
+} catch (error) {
+  console.error("Error fetching author posts:", error);
+}
+
+const pageTitle = `PINGUIN | Autor: ${author}`;
+const question = "Welches Betriebssystem verwenden Sie am häufigsten?";
+const answers = JSON.stringify(["Windows", "macOS", "Linux", "Andere"]);
+---
+
+<Main pageTitle={pageTitle}>
+  <Split>
+    <div slot="Articles">
+      <div class="bg-blue-200 p-4 rounded-3xl bg-clip-padding backdrop-filter backdrop-blur-3xl bg-opacity-20 ring-1 ring-blue-200 mb-8">
+        {authorData ? (
+          <div class="flex align-middle items-center mt-4">
+            <img 
+              src={authorData.avatar_urls["96"]}
+              alt={`${authorData.name}'s Profile Picture`} 
+              class="w-32 h-32 rounded-full object-cover"
+            />
+            <div class="ml-4">
+              <h1 class="text-2xl font-bold text-blue-900">{authorData.name}</h1>
+              <p class="text-blue-800 my-2">{authorData.description}</p>
+              {authorData.acf?.position && (
+                <p class="text-blue-700 mb-2">{authorData.acf.position}</p>
+              )}
+              {authorData.acf?.social_media && (
+                <div class="flex gap-2">
+                  {authorData.acf.social_media.twitter && (
+                    <a href={authorData.acf.social_media.twitter} target="_blank" class="text-blue-600 hover:text-blue-800">Twitter</a>
+                  )}
+                  {authorData.acf.social_media.linkedin && (
+                    <a href={authorData.acf.social_media.linkedin} target="_blank" class="text-blue-600 hover:text-blue-800">LinkedIn</a>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
+        ) : (
+          <p class="text-blue-900">Autor nicht gefunden</p>
+        )}
+      </div>
+      <div class="">
+        <h1 class="text-3xl text-blue-900 font-bold mb-6">Artikel von {author}</h1>
+        {authorPosts.map((post) => (
+          <Card
+            title={post.title.rendered}
+            description={post.excerpt.rendered}
+            href={post.link.replace("https://wp.fiosproject.de/archive/", "/article/")}
+            fimage={post._embedded?.['wp:featuredmedia']?.[0]?.source_url || ''}
+            hashtags={post._embedded?.['wp:term']?.flat().map(term => term.name).join(', ') || ''}
+          />
+        ))}
+      </div>
+    </div>
+    <div slot="Widgets">
+      <Weather degrees={weatherData.temperature} iconurl={weatherData.iconurl} />
+      <Poll question={question} answers={answers} />
+      <NewArticles articles={["Artikel 1", "Artikel 2", "Artikel 3"]} />
+      <Hashtags hashtags={["Video", "Essen", "Allgemein"]} />
+    </div>
+  </Split>
+</Main>

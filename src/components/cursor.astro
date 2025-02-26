@@ -14,6 +14,16 @@
         z-index: 999;
         position: fixed; /* Ensure cursor is fixed */
       }
+      /* On mobile*/
+      @media (max-width: 640px) {
+        .custom-cursor {
+          display: none;
+        }
+        body {
+          cursor: pointer; /* Show default cursor on mobile */
+        }
+      }
+
       .custom-cursor.click,
       .custom-cursor.drag {
         width: 40px;

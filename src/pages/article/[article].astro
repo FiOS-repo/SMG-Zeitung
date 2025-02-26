@@ -4,6 +4,7 @@ const { article } = Astro.params;
 import "../../styles/input.css";
 import Main from "../../layouts/Main.astro";
 import Split from "../../layouts/Split.astro";
+import Button from "@/components/Button.astro";
 
 // Import Widgets
 import Weather from "../../components/widgets/Weather.astro";
@@ -17,12 +18,13 @@ interface WeatherData {
   iconurl?: string;
 }
 
-interface Comment {
-  id: number;
-  author_name: string;
-  content: { rendered: string };
-  author_avatar_urls: { "96": string };
-  author_user_role?: string; // Assuming WordPress includes user roles
+
+interface Author {
+  name: string;
+  description: string;
+  avatar_urls: {
+    [key: string]: string;
+  };
 }
 
 // Async function for data fetching
@@ -30,7 +32,8 @@ async function fetchWeatherData() {
   let weatherData: WeatherData = {};
   try {
     const res = await fetch("http://localhost:3000/weather");
-    if (!res.ok) throw new Error(`Failed to fetch weather data. Status: ${res.status}`);
+    if (!res.ok)
+      throw new Error(`Failed to fetch weather data. Status: ${res.status}`);
     weatherData = await res.json();
   } catch (error) {
     console.error("Error fetching weather data:", error);
@@ -39,16 +42,25 @@ async function fetchWeatherData() {
 }
 
 async function fetchArticleData(slug: string) {
-  let articleData: { id: number; name: string; content: string } | null = null;
+  let articleData: {
+    id: number;
+    name: string;
+    content: string;
+    author: number;
+  } | null = null;
   try {
-    const res = await fetch(`https://wp.fiosproject.de/wp-json/wp/v2/posts?slug=${slug}`);
-    if (!res.ok) throw new Error(`Failed to fetch article data. Status: ${res.status}`);
+    const res = await fetch(
+      `https://wp.fiosproject.de/wp-json/wp/v2/posts?slug=${slug}`,
+    );
+    if (!res.ok)
+      throw new Error(`Failed to fetch article data. Status: ${res.status}`);
     const data = await res.json();
     if (data.length > 0) {
       articleData = {
         id: data[0].id,
         name: data[0].title.rendered,
         content: data[0].content.rendered,
+        author: data[0].author,
       };
     } else {
       console.error("Article not found.");
@@ -59,52 +71,33 @@ async function fetchArticleData(slug: string) {
   return articleData;
 }
 
-async function fetchComments(postId: number): Promise<Comment[]> {
-  let comments: Comment[] = [];
+async function fetchAuthorData(authorId: number): Promise<Author | null> {
   try {
-    const username = "admin"; // Replace with your admin username
-    const applicationPassword = "#EichendorffB2+"; // Replace with the generated password
-    const credentials = btoa(`${username}:${applicationPassword}`);
-    const res = await fetch(`https://wp.fiosproject.de/wp-json/wp/v2/comments?post=${postId}`, {
-      method: "GET",
-      headers: {
-        Authorization: `Basic ${credentials}`,
-      },
-    });
-
-    if (!res.ok) throw new Error(`Failed to fetch comments. Status: ${res.status}`);
-    comments = await res.json();
+    const res = await fetch(
+      `https://wp.fiosproject.de/wp-json/wp/v2/users/${authorId}`,
+    );
+    if (!res.ok)
+      throw new Error(`Failed to fetch author data. Status: ${res.status}`);
+    const data = await res.json();
+    return {
+      name: data.name,
+      description: data.description,
+      avatar_urls: data.avatar_urls,
+    };
   } catch (error) {
-    console.error("Error fetching comments:", error);
-  }
-  return comments;
-}
-
-
-async function sendComment(postId: number, name: string, comment: string) {
-  try {
-    const res = await fetch("https://wp.fiosproject.de/wp-json/wp/v2/comments", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        post: postId,
-        author_name: name,
-        content: comment,
-      }),
-    });
-    if (!res.ok) throw new Error(`Failed to send comment. Status: ${res.status}`);
-    alert("Comment submitted successfully!");
-  } catch (error) {
-    console.error("Error submitting comment:", error);
-    alert("Failed to submit comment.");
+    console.error("Error fetching author data:", error);
+    return null;
   }
 }
+
+
 
 const weatherData = await fetchWeatherData();
 const articleData = await fetchArticleData(article);
-const comments = articleData ? await fetchComments(articleData.id) : [];
+
+const authorData = articleData
+  ? await fetchAuthorData(articleData.author)
+  : null;
 
 const question = "Welches Betriebssystem verwenden Sie am häufigsten?";
 const answers = JSON.stringify(["Windows", "macOS", "Linux", "Andere"]);
@@ -117,112 +110,264 @@ const pageTitle = `PINGUIN | ${article}`;
     <div slot="Articles">
       <!--TODO: ZUrück Button-->
       <!--TODO: Wie lange muss ich noch das lesen aushalten-->
-      <div class="max-w-3xl mx-auto p-6 bg-blue-200 rounded-3xl bg-clip-padding backdrop-filter backdrop-blur-3xl bg-opacity-20 ring-1 ring-blue-200 p-6 shadow-lg  flex-1 h-fit mb-5">
-        {articleData && (
+      <div
+        class="max-w-3xl mx-auto p-6 bg-blue-200 rounded-3xl bg-clip-padding backdrop-filter backdrop-blur-3xl bg-opacity-20 ring-1 ring-blue-200 p-6 shadow-lg flex-1 h-fit mb-5"
+      >
+        {
+          articleData && (
             <div>
-              <h1 class="text-3xl text-blue-900 font-bold" id="title">{articleData.name}</h1>
-              <div id="content" set:html={articleData.content}></div>
+              <h1 class="text-3xl text-blue-900 font-bold" id="title">
+                {articleData.name}
+              </h1>
+              <div id="content" set:html={articleData.content} />
             </div>
-        )}
+          )
+        }
         {!articleData && <p>Artikel konnte nicht geladen werden.</p>}
       </div>
 
-      <!-- Comment Section 
-      <div class="max-w-3xl mx-auto p-6 bg-blue-100 rounded-3xl shadow-lg flex-1 h-fit mb-5">
-        <h1>Kommentare</h1>
-        {comments.length > 0 ? (
-            comments.map((comment) => (
-                <div class="max-w-3xl mx-auto p-6 bg-blue-200 rounded-3xl shadow-lg mb-4">
-                  <div class="flex items-center">
-                    <img src={comment.author_avatar_urls["96"]} alt={comment.author_name} class="w-12 h-12 rounded-full object-cover">
-                    <h2 class="ml-4">{comment.author_name}</h2>
-                    {comment.author_user_role === "administrator" && (
-                        <span class="bg-blue-100 text-blue-800 text-xs font-medium px-2.5 py-0.5 rounded ml-2">Admin</span>
-                    )}
-                  </div>
-                  <p set:html={comment.content.rendered}></p>
-                </div>
-            ))
-        ) : (
-            <p>Keine Kommentare verfügbar.</p>
-        )}
-      </div>
-
-       Comment Form 
-      <div class="max-w-3xl mx-auto p-6 bg-blue-100 rounded-3xl shadow-lg flex-1 h-fit">
-        <h1>Kommentar Verfassen</h1>
-        <form onSubmit={async (e) => {
-          e.preventDefault();
-          const form = e.target as HTMLFormElement;
-          const name = (form.elements.namedItem("name") as HTMLInputElement).value;
-          const comment = (form.elements.namedItem("comment") as HTMLTextAreaElement).value;
-          if (articleData) {
-            await sendComment(articleData.id, name, comment);
-          }
-        }} class="mx-auto">
-          <div class="mb-5">
-            <label for="name" class="block mb-2 text-sm font-medium text-gray-900">Dein Name</label>
-            <input type="text" id="name" name="name" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5" required />
+      <div
+        class="bg-blue-200 rounded-3xl bg-clip-padding backdrop-filter backdrop-blur-3xl bg-opacity-20 ring-1 ring-blue-200 flex flex-col justify-center items-center p-6 shadow-lg w-full mb-10"
+      >
+        <h1 class="text-blue-900">Wie fandest du diesen Beitrag</h1>
+        <div class="mt-4 flex justify-center items-center gap-4">
+          <div class="flex">
+            <img
+              src="/src/assets/star-svgrepo-com.svg"
+              alt=""
+              class="h-16 opacity-60 mx-2 hover:h-20 hover:rotate-12 duration-500"
+              id="star"
+            />
+            <img
+              src="/src/assets/star-svgrepo-com.svg"
+              alt=""
+              class="h-16 opacity-60 mx-2 hover:h-20 hover:rotate-12 duration-500"
+              id="star"
+            />
+            <img
+              src="/src/assets/star-svgrepo-com.svg"
+              alt=""
+              class="h-16 opacity-60 mx-2 hover:h-20 hover:rotate-12 duration-500"
+              id="star"
+            />
+            <img
+              src="/src/assets/star-svgrepo-com.svg"
+              alt=""
+              class="h-16 opacity-60 mx-2 hover:h-20 hover:rotate-12 duration-500"
+              id="star"
+            />
+            <img
+              src="/src/assets/star-svgrepo-com.svg"
+              alt=""
+              class="h-16 opacity-60 mx-2 hover:h-20 hover:rotate-12 duration-500"
+              id="star"
+            />
           </div>
-          <div class="mb-5">
-            <label for="comment" class="block mb-2 text-sm font-medium text-gray-900">Dein Kommentar</label>
-            <textarea id="comment" name="comment" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5" required></textarea>
-          </div>
-          <button type="submit" class="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm w-full sm:w-auto px-5 py-2.5 text-center">Submit</button>
-        </form>
-      </div>
-      -->
-      <div class="bg-blue-200 rounded-3xl bg-clip-padding backdrop-filter backdrop-blur-3xl bg-opacity-20 ring-1 ring-blue-200 flex flex-col justify-center items-center p-6 shadow-lg w-full mb-10">
-        <h1 class="text-blue-900">Wie fandest du diesen Beitrag</h1> 
-        <div class="mt-5 flex justify-center items-center">
-          <img src="/src/assets/star-svgrepo-com.svg" alt="" class="h-16 opacity-60 mx-2 hover:h-20 hover:rotate-12 duration-500" id="star">
-          <img src="/src/assets/star-svgrepo-com.svg" alt="" class="h-16 opacity-60 mx-2 hover:h-20 hover:rotate-12 duration-500" id="star">
-          <img src="/src/assets/star-svgrepo-com.svg" alt="" class="h-16 opacity-60 mx-2 hover:h-20 hover:rotate-12 duration-500" id="star">
-          <img src="/src/assets/star-svgrepo-com.svg" alt="" class="h-16 opacity-60 mx-2 hover:h-20 hover:rotate-12 duration-500" id="star">
-          <img src="/src/assets/star-svgrepo-com.svg" alt="" class="h-16 opacity-60 mx-2 hover:h-20 hover:rotate-12 duration-500" id="star">
+        </div>
+        <div id="rating_info" class="text-blue-900 text-lg">
+          <p>Durchschnittliche Bewertung: <span id="avg_rating"></span>/5</p>
+          <p>Anzahl Bewertungen: <span id="rating_count">0</span></p>
         </div>
         <script>
-          document.addEventListener('DOMContentLoaded', () => {
+          async function updateRatingStats() {
+            try {
+              const response = await fetch(
+                "http://localhost:3000/api/star/stats",
+              );
+              if (!response.ok) throw new Error("Failed to fetch rating stats");
+              const json = await response.json();
+              const titleElement = document.getElementById("title");
+              if (titleElement) {
+                const name = titleElement.innerText;
+                const stats = json[name];
+                if (stats) {
+                  document.getElementById("avg_rating").innerText =
+                    stats.averageRating;
+                  document.getElementById("rating_count").innerText =
+                    stats.count;
+                }
+              }
+            } catch (error) {
+              console.error("Error fetching rating stats:", error);
+            }
+          }
+
+          document.addEventListener("DOMContentLoaded", () => {
             const articleName = document.getElementById("title")?.innerText;
             const ratedKey = `rated_${articleName}`;
             const ratingKey = `rating_${articleName}`;
             const rated = localStorage.getItem(ratedKey);
             const rating = localStorage.getItem(ratingKey);
-            const stars = document.querySelectorAll('#star');
-            
+            const stars = document.querySelectorAll("#star");
+
+            updateRatingStats();
+
             if (rated && rating) {
               stars.forEach((star, index) => {
-                if (index < rating) {
-                  star.src = '/src/assets/star-svgrepo-com.svg';
+                if (index < parseInt(rating)) {
+                  star.src = "/src/assets/star-svgrepo-com.svg";
                 } else {
-                  star.src = '/src/assets/star-svgrepo-com-empty.svg';
+                  star.src = "/src/assets/star-svgrepo-com-empty.svg";
                 }
-                star.style.pointerEvents = 'none';
+                star.style.pointerEvents = "none";
               });
             } else {
               stars.forEach((star, index) => {
-                star.addEventListener('click', () => {
-                  localStorage.setItem(ratedKey, 'true');
-                  localStorage.setItem(ratingKey, index + 1);
-                  fetch(`http://localhost:3000/api/star?stars=${index + 1}&article=${articleName}`);
+                star.addEventListener("click", async () => {
+                  localStorage.setItem(ratedKey, "true");
+                  localStorage.setItem(ratingKey, (index + 1).toString());
+                  await fetch(
+                    `http://localhost:3000/api/star?stars=${index + 1}&article=${articleName}`,
+                  );
                   stars.forEach((s, i) => {
                     if (i <= index) {
-                      s.src = '/src/assets/star-svgrepo-com.svg';
+                      s.src = "/src/assets/star-svgrepo-com.svg";
                     } else {
-                      s.src = '/src/assets/star-svgrepo-com-empty.svg';
+                      s.src = "/src/assets/star-svgrepo-com-empty.svg";
                     }
-                    s.style.pointerEvents = 'none';
+                    s.style.pointerEvents = "none";
                   });
+                  // Update stats after rating
+                  setTimeout(updateRatingStats, 500);
                 });
               });
             }
           });
         </script>
       </div>
+      <div
+        class="bg-blue-200 p-4 rounded-3xl bg-clip-padding backdrop-filter backdrop-blur-3xl bg-opacity-20 ring-1 ring-blue-200"
+      >
+        <div class="flex align-middle items-center mt-4">
+          {
+            authorData && (
+              <>
+                <img
+                  src={authorData.avatar_urls["96"]}
+                  alt={`${authorData.name}'s Profile Picture`}
+                  class="w-32 h-32 rounded-full object-cover"
+                />
+                <div class="ml-4">
+                  <h1>{authorData.name}</h1>
+                  <p>{authorData.description}</p>
+                  <Button
+                    href={"/author/" + authorData.name}
+                    text={`Mehr von ${authorData.name}`}
+                  />
+                </div>
+              </>
+            )
+          }
         </div>
+      </div>
+      <div
+        class="p-4 mt-4 bg-blue-200 rounded-3xl bg-clip-padding backdrop-filter backdrop-blur-3xl bg-opacity-20 ring-1 ring-blue-200"
+      >
+        <h1>Kommentar Verfassen</h1>
+
+        <input
+          type="text"
+          id="first_name"
+          class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 mb-4"
+          placeholder="Name"
+          required
+        />
+        <textarea
+          id="message"
+          rows="4"
+          class="rounded-3xl block p-2.5 w-full text-sm text-gray-900 bg-gray-50 rounded-lg border border-gray-300 focus:ring-blue-500 focus:border-blue-500 "
+          placeholder="Dein Kommentar hier..."></textarea>
+        <div id="comment-feedback" class="mt-2 text-sm hidden">
+          <p class="text-green-600" id="comment-success">Kommentar wurde gesendet und wartet auf Freigabe.</p>
+          <p class="text-red-600" id="comment-error"></p>
+        </div>
+        
+        <script define:vars={{ article }}>
+          async function fetchComments() {
+            try {
+              const response = await fetch('http://localhost:3000/api/comment');
+              const comments = await response.json();
+              return comments.filter(c => c.article === article);
+            } catch (error) {
+              console.error('Error fetching comments:', error);
+              return [];
+            }
+          }
+
+          function sendComment() {
+            const nameInput = document.getElementById('first_name');
+            const messageInput = document.getElementById('message');
+            const successEl = document.getElementById('comment-success');
+            const errorEl = document.getElementById('comment-error');
+            const feedbackEl = document.getElementById('comment-feedback');
+
+            feedbackEl.classList.add('hidden');
+            successEl.classList.add('hidden');
+            errorEl.classList.add('hidden');
+
+            const name = nameInput.value.trim();
+            const comment = messageInput.value.trim();
+
+            if (!name || !comment) {
+              errorEl.textContent = 'Bitte fülle alle Felder aus.';
+              errorEl.classList.remove('hidden');
+              feedbackEl.classList.remove('hidden');
+              return;
+            }
+
+            const url = `http://localhost:3000/api/comment/send?name=${encodeURIComponent(name)}&comment=${encodeURIComponent(comment)}&article=${encodeURIComponent(article)}`;
+
+            fetch(url)
+              .then(response => {
+                if (response.ok) {
+                  successEl.classList.remove('hidden');
+                  feedbackEl.classList.remove('hidden');
+                  nameInput.value = '';
+                  messageInput.value = '';
+                  loadComments(); // Refresh comments after submission
+                } else {
+                  throw new Error('Fehler beim Senden des Kommentars');
+                }
+              })
+              .catch(error => {
+                errorEl.textContent = error.message;
+                errorEl.classList.remove('hidden');
+                feedbackEl.classList.remove('hidden');
+              });
+          }
+
+          async function loadComments() {
+            const comments = await fetchComments();
+            const commentsContainer = document.getElementById('comments-container');
+            
+            commentsContainer.innerHTML = comments.map(comment => `
+              <div class="mt-4 p-4 bg-blue-200 rounded-3xl bg-clip-padding backdrop-filter backdrop-blur-3xl bg-opacity-20 ring-1 ring-blue-200">
+                <h2>${comment.name}</h2>
+                <p>${comment.comment}</p>
+                <small class="text-gray-500">${new Date(comment.timestamp).toLocaleString()}</small>
+              </div>
+            `).join('');
+          }
+
+          // Initial load of comments
+          document.addEventListener('DOMContentLoaded', loadComments);
+          window.sendComment = sendComment;
+        </script>
+
+        <Button text="Absenden" onclick="sendComment()" client:load />
+      </div>
+
+      <!--Comments -->
+      <div id="comments-container">
+        <!-- Comments will be loaded here dynamically -->
+      </div>
+    </div>
 
     <div slot="Widgets">
-      <Weather degrees={weatherData.temperature} iconurl={weatherData.iconurl} />
+      <Weather
+        degrees={weatherData.temperature}
+        iconurl={weatherData.iconurl}
+      />
       <Poll question={question} answers={answers} />
       <NewArticles articles={["Artikel 1", "Artikel 2", "Artikel 3"]} />
       <Hashtags hashtags={["Video", "Essen", "dsa"]} />

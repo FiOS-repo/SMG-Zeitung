@@ -1,0 +1,14 @@
+{
+    "Hallo": {
+      "totalStars": 12,
+      "averageRating": "4.00"
+    },
+    "Ein Langer Beitrag": {
+      "totalStars": 8,
+      "averageRating": "4.00"
+    },
+    "So sieht ein Schultag in Simbabwe aus": {
+      "totalStars": 5,
+      "averageRating": "5.00"
+    }
+  }

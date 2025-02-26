@@ -1,5 +1,4 @@
 ---
-// No server-side code here—only the markup.
 import Button from "../Button.astro";
 ---
 <div class="bg-blue-200 rounded-3xl bg-clip-padding backdrop-filter backdrop-blur-3xl bg-opacity-20 ring-1 ring-blue-200 p-6 shadow-lg mb-10 w-full">
@@ -9,12 +8,15 @@ import Button from "../Button.astro";
     <div id="answers" class="mt-4">
       <p class="text-gray-500">Lädt Antworten...</p>
     </div>
+    <div id="results" class="mt-4 hidden">
+      <canvas id="resultsChart"></canvas>
+    </div>
   </div>
-  <!-- Note: the Button component uses the onclick prop which will trigger the global submitAnswer() -->
   <Button text="Abstimmen" onclick="submitAnswer()" />
 </div>
 
-<!-- All browser-specific code is placed inside this client:load script tag -->
+<script is:inline src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
 <script client:load>
   let question = "Lädt...";
   let parsedAnswers = [];
@@ -28,13 +30,20 @@ import Button from "../Button.astro";
     answersContainer.innerHTML = "";
     parsedAnswers.forEach(answer => {
       const label = document.createElement("label");
-      label.className = "flex items-center mb-2";
+      label.className = "flex items-center mb-2 option";
       label.innerHTML = `
         <input type="radio" name="os" class="mr-2" value="${answer}" onchange="setSelectedAnswer('${answer}')" />
         <span class="text-gray-700">${answer}</span>
       `;
       answersContainer.appendChild(label);
     });
+    parsedAnswers.forEach(answer => {
+      const bar = document.createElement("div");
+      bar.className = "bg-blue-200 rounded-full h-2 w-0 mt-2";
+      bar.innerHTML = `
+        <div class="bg-blue-500 rounded-full h-2 w-10" class="bar-${answer}"></div>
+      `;
+    })
   }
 
   // Global function to update the selected answer (accessible from inline event handlers)
@@ -64,30 +73,105 @@ import Button from "../Button.astro";
       });
   }
 
+  let resultsChart = null;
+
+  // Function to fetch and display results
+  async function showResults() {
+    try {
+      const response = await fetch(`http://localhost:3000/api/poll/results?id=${pollId}`);
+      if (!response.ok) throw new Error("Failed to fetch results");
+      const answers = await response.json();
+      
+      // Calculate percentages
+      const counts = {};
+      answers.forEach(answer => {
+        counts[answer] = (counts[answer] || 0) + 1;
+      });
+      
+      const total = answers.length;
+      
+      // Prepare data for chart
+      const data = parsedAnswers.map(answer => ({
+        label: answer,
+        value: counts[answer] || 0,
+        percentage: total ? Math.round(((counts[answer] || 0) / total) * 100) : 0
+      }));
+
+      // Show results container and hide answers
+      document.getElementById('results').classList.remove('hidden');
+      document.getElementById('answers').classList.add('hidden');
+
+      // Destroy existing chart if it exists
+      if (resultsChart) {
+        resultsChart.destroy();
+      }
+
+      // Create new chart
+      const ctx = document.getElementById('resultsChart');
+      resultsChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: data.map(item => item.label),
+          datasets: [{
+            data: data.map(item => item.percentage),
+            backgroundColor: 'rgba(59, 130, 246, 0.8)',
+            borderColor: 'rgba(59, 130, 246, 1)',
+            borderWidth: 1
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: {
+            legend: {
+              display: false
+            },
+            tooltip: {
+              callbacks: {
+                label: (context) => `${context.raw}% (${data[context.dataIndex].value} votes)`
+              }
+            }
+          },
+          scales: {
+            y: {
+              beginAtZero: true,
+              max: 100,
+              ticks: {
+                callback: value => value + '%'
+              }
+            }
+          }
+        }
+      });
+
+    } catch (error) {
+      console.error("Error fetching results:", error);
+    }
+  }
+
   // Submit the selected answer to the API
-  function submitAnswer() {
+  window.submitAnswer = async () => {
     if (!selectedAnswer) {
       alert("Bitte wähle eine Antwort aus.");
       return;
     }
 
-    fetch(`http://localhost:3000/api/poll/answer?id=${pollId}&answer=${selectedAnswer}`, {
-      method: "GET"
-    })
-      .then(response => {
-        if (!response.ok) {
-          throw new Error("Fehler beim Absenden der Antwort");
-        }
-        return response.text();
-      })
-      .then(data => {
-
-      })
-      .catch(error => {
-        console.error("Fehler beim Absenden:", error);
-        alert("Fehler beim Speichern der Antwort.");
+    try {
+      const response = await fetch(`http://localhost:3000/api/poll/answer?id=${pollId}&answer=${selectedAnswer}`, {
+        method: "GET"
       });
-  }
+      
+      if (!response.ok) {
+        throw new Error("Fehler beim Absenden der Antwort");
+      }
+      
+      // Show results after successful submission
+      await showResults();
+      
+    } catch (error) {
+      console.error("Fehler beim Absenden:", error);
+      alert("Fehler beim Speichern der Antwort.");
+    }
+  };
 
   // Run loadPoll once the DOM content is loaded
   document.addEventListener("DOMContentLoaded", loadPoll);

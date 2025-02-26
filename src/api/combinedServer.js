@@ -1,33 +1,57 @@
 import express from 'express';
 import fs from 'fs';
+import path from 'path';
 import { config } from 'dotenv';
 import fetch from 'node-fetch';
 import { schedule } from 'node-cron';
+import cors from 'cors';
 
 config();
 const app = express();
 app.use(express.json());
+app.use(cors());
+
+// Define absolute file paths
+const API_DIR = path.resolve('./');
+const STARS_FILE = path.join(API_DIR, 'stars.csv');
+const POLLS_JSON = path.join(API_DIR, 'polls.json');
+const POLLS_CSV = path.join(API_DIR, 'polls.csv');
+const COMMENTS_FILE = path.join(API_DIR, 'pending_comments.json');
+
+// Ensure files exist
+const ensureFile = (filePath) => {
+    if (!fs.existsSync(filePath)) {
+        const defaultContent = filePath.endsWith('.json') ? '[]' : '';
+        fs.writeFileSync(filePath, defaultContent, 'utf8');
+    }
+};
+
+// Initialize files
+[STARS_FILE, POLLS_JSON, POLLS_CSV, COMMENTS_FILE].forEach(ensureFile);
 
 // Star rating API
 app.get("/api/star", (req, res) => {
-    let stars = req.query.stars;
-    let article = req.query.article;
+    const stars = parseInt(req.query.stars);
+    const article = req.query.article;
 
-    if (!stars && article) {
-        res.send(`Hmm. Kann es sein, dass du uns hacken willst`);
-    } else if (stars > 5) {
-        res.send("Hmm. Kann es sein, dass du uns hacken willst");
-    } else {
-        fs.appendFile('stars.csv', `${stars},${article} \n`, function (err) {
-            if (err) throw err;
-            console.log('Saved!');
-        });
-        res.send("Saved");
+    if (!article || typeof article !== 'string') {
+        return res.status(400).send("Invalid article parameter");
     }
+    if (!stars || isNaN(stars) || stars < 1 || stars > 5) {
+        return res.status(400).send("Stars must be between 1 and 5");
+    }
+
+    fs.appendFile(STARS_FILE, `${stars},${article}\n`, err => {
+        if (err) {
+            console.error('Error saving star rating:', err);
+            return res.status(500).send("Error saving rating");
+        }
+        res.send("Saved");
+    });
 });
 
 app.get("/api/poll/", (_, res) => {
-    fs.readFile("polls.json", "utf8", function(err, data) {
+    fs.readFile(POLLS_JSON, "utf8", function (err, data) {
         if (err) {
             res.sendStatus(500).send("Error reading polls.json");
             return;
@@ -36,6 +60,30 @@ app.get("/api/poll/", (_, res) => {
         let length = json.length;
         let index = Math.floor(Math.random() * length);
         res.send(json[index]);
+    });
+});
+
+app.get("/api/poll/results", (req, res) => {
+    let id = req.query.id;
+
+    if (!id) {
+        res.sendStatus(400).send("Fehlende id Parameter");
+        return;
+    }
+
+    fs.readFile(POLLS_CSV, "utf8", function (err, data) {
+        if (err) {
+            res.sendStatus(500).send("Error reading polls.csv");
+            return;
+        }
+
+        let lines = data.trim().split('\n');
+        let answers = lines
+            .map(line => line.split(','))
+            .filter(([pollId, _]) => pollId === id)
+            .map(([_, answer]) => answer);
+
+        res.send(answers);
     });
 });
 
@@ -48,7 +96,7 @@ app.get("/api/poll/answer", (req, res) => {
         return;
     }
 
-    fs.appendFile("polls.csv", `${id},${answer}\n`, function(err) {
+    fs.appendFile(POLLS_CSV, `${id},${answer}\n`, function (err) {
         if (err) {
             res.sendStatus(500).send("Error writing answer");
             return;
@@ -58,35 +106,46 @@ app.get("/api/poll/answer", (req, res) => {
 });
 
 app.get("/api/star/stats", (req, res) => {
-    fs.readFile('stars.csv', 'utf8', function (err, data) {
-        if (err) throw err;
-
-        let lines = data.trim().split('\n');
-        let articleStats = {};
-
-        lines.forEach(line => {
-            let [stars, article] = line.split(',').map(item => item.trim());
-            stars = parseInt(stars);
-
-            if (!articleStats[article]) {
-                articleStats[article] = { totalStars: 0, count: 0 };
+    fs.readFile(STARS_FILE, 'utf8', (err, data) => {
+        if (err) {
+            if (err.code === 'ENOENT') {
+                return res.json({});
             }
-
-            articleStats[article].totalStars += stars;
-            articleStats[article].count += 1;
-        });
-
-        let stats = {};
-        for (let article in articleStats) {
-            let totalStars = articleStats[article].totalStars;
-            let count = articleStats[article].count;
-            stats[article] = {
-                totalStars: totalStars,
-                averageRating: (totalStars / count).toFixed(2)
-            };
+            console.error('Error reading star stats:', err);
+            return res.status(500).send("Error reading stats");
         }
 
-        res.send(stats);
+        try {
+            let lines = data.trim().split('\n');
+            let articleStats = {};
+
+            lines.forEach(line => {
+                if (!line) return;
+                let [stars, article] = line.split(',').map(item => item.trim());
+                stars = parseInt(stars);
+
+                if (!articleStats[article]) {
+                    articleStats[article] = { totalStars: 0, count: 0 };
+                }
+
+                articleStats[article].totalStars += stars;
+                articleStats[article].count += 1;
+            });
+
+            let stats = Object.entries(articleStats).reduce((acc, [article, data]) => {
+                acc[article] = {
+                    totalStars: data.totalStars,
+                    count: data.count,
+                    averageRating: (data.totalStars / data.count).toFixed(1)
+                };
+                return acc;
+            }, {});
+
+            res.json(stats);
+        } catch (error) {
+            console.error('Error processing star stats:', error);
+            res.status(500).send("Error processing stats");
+        }
     });
 });
 
@@ -145,6 +204,45 @@ app.get('/weather', (req, res) => {
         res.json(weatherData);
     } else {
         res.status(503).json({ error: 'Weather data not available' });
+    }
+});
+
+app.get('/api/comment', (req, res) => {
+    fs.readFile(COMMENTS_FILE, 'utf8', (err, data) => {
+        res.send(data)
+    });
+});
+
+
+app.get('/api/comment/send', (req, res) => {
+    const { comment, name, article } = req.query;
+
+    if (!comment || !name || !article || 
+        typeof comment !== 'string' || 
+        typeof name !== 'string' || 
+        typeof article !== 'string') {
+        return res.status(400).send("Invalid parameters");
+    }
+
+    try {
+        let comments = [];
+        if (fs.existsSync(COMMENTS_FILE)) {
+            const data = fs.readFileSync(COMMENTS_FILE, 'utf8');
+            comments = JSON.parse(data);
+        }
+
+        comments.push({ 
+            name, 
+            comment, 
+            article,
+            timestamp: new Date().toISOString()
+        });
+
+        fs.writeFileSync(COMMENTS_FILE, JSON.stringify(comments, null, 2));
+        res.send("Comment saved");
+    } catch (error) {
+        console.error('Error handling comment:', error);
+        res.status(500).send("Error processing comment");
     }
 });
 
